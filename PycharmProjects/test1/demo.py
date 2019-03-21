@@ -21,45 +21,48 @@ class weibo:
 
     def get_username(self,info):
         try:
-            str_name=info.xpath("")
-            url="https://s.weibo.com/weibo?q="+self.content+"&typeall=1&suball=1&timescope=custom:"+self.start_time+":"+self.end_time
-            html=requests.get(url, cookies=self.cookie).content
-            print(url)
-            selector=etree.HTML(html)
-            username = selector.xpath("//a[@class='name']/text()")[0]
-            return username
+            if info.xpath("div/a[@class='nk']/text()")[0]:
+                str_name=info.xpath("div/a[@class='nk']/text()")[0]
+                self.username=str_name
+                print(self.username)
+            else:
+                print('')
         except Exception as e:
             print("Error:",e)
             traceback.print_exc()
 
     def get_weibo_info(self):
         try:
-            url="https://weibo.cn/search/?q=advancedfilter=1&keyword="+self.content+"nick=&starttime="+self.start_time+"&"+self.end_time+"&sort=time&smblog=搜索"
+            url="https://weibo.cn/search/mblog?hideSearchFrame=&keyword="+self.content+"&starttime="+self.start_time+"&"+self.end_time+"&sort=time&smblog=搜索"
             html=requests.get(url,cookies=self.cookie).content
             selector=etree.HTML(html)
             if selector.xpath("//input[@name='mp']")==[]:
                 page_num=1
             else:
-                page_num=selector.xpath("//input[@name='mp']")[0].attrib["value"]
+                page_num=int(selector.xpath("//input[@name='mp']")[0].attrib["value"])
             for page in range(1,page_num+1):
-                url2=url+"&page="+page
+                url2=url+"&page="+str(page)
+                print(url2)
                 html2=requests.get(url2,cookies=self.cookie).content
                 selector2=etree.HTML(html2)
                 info=selector2.xpath("//div[@class='c']")
                 is_empty=info[0].xpath("//span[@class='ctt']")
                 if is_empty:
-                    for i in range(0,len(info)-2):
+                    for i in range(2,len(info)-2):
                         self.get_username(info[i])
-        except:
-            print()
-
+                        print(i-1)
+                else:
+                    print("0")
+        except Exception as e:
+            print("Error:",e)
+            traceback.print_exc()
 def main():
     try:
         content="杭州电子科技大学"
         start_time="20190301"
         end_time="20190320"
         wb=weibo(content,start_time,end_time)
-        abname=wb.get_username()
+        abname=wb.get_weibo_info()
         print(abname)
     except Exception as e:
         print("error",e)
