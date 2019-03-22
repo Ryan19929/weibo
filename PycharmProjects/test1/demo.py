@@ -5,6 +5,8 @@ from lxml import etree
 import re
 import requests
 import traceback
+import sys
+import traceback
 
 class weibo:
     cookie={"Cookie":"ALF=1555641304; SCF=ApRSzMac3kjcUBx4UF_Gp36PAEkPTvnieMUJwbsVf9Nb2eZImZUSBdH5V2OH-mMjQLll1lBwstFMmodSzcCwDOA.; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9W55RIB_wq7247bANwEPZMAy5JpX5KMhUgL.Fo-ESo.RSK-E1K22dJLoIEBLxKqL1-zL1-BLxKnLB--LBonLxKqL1h.L1K2LxKnL1K.L1-2t; _T_WM=80299f9c025f2bc6a3be1cb3928fe038; TMPTOKEN=ap0u38Dm2FUCea8XRddGugb0xIGfzalkCveRUNQAEJfP2B0dtCgwA9ERPvIsGY57; SUB=_2A25xldeoDeRhGeNM7VsZ9SvOwj2IHXVTefngrDV6PUJbkdAKLRXmkW1NThWn4pj_eYD6eSmqKdnxD9Xh-qIhvJAx; SUHB=0Yhhu-8dErQS7J; SSOLoginState=1553049592; MLOGIN=1; XSRF-TOKEN=be6922; WEIBOCN_FROM=1110006030; M_WEIBOCN_PARAMS=uicode%3D20000174"}
@@ -21,14 +23,23 @@ class weibo:
 
     def get_username(self,info):
         try:
-            if info.xpath("div/a[@class='nk']/text()")[0]:
+            if info.xpath("//a[@class='nk']/text()")[0]:
                 str_name=info.xpath("div/a[@class='nk']/text()")[0]
                 self.username=str_name
-                print(self.username)
-            else:
-                print('')
+                print("ID:"+str_name)
         except Exception as e:
             print("Error:",e)
+            traceback.print_exc()
+
+    def get_content(self,info):
+        try:
+            if info.xpath("div/span[@class='ctt']"):
+                str_c=info.xpath("div/span[@class='ctt']")
+                weibo_content=str_c[0].xpath("string(.)").replace(u"\u200b","").encode(sys.stdout.encoding,"ignore").decode(sys.stdout.encoding)
+                self.weibo_content.append(weibo_content)
+                print("内容："+weibo_content)
+        except Exception as e:
+            print("Error",e)
             traceback.print_exc()
 
     def get_weibo_info(self):
@@ -46,13 +57,17 @@ class weibo:
                 html2=requests.get(url2,cookies=self.cookie).content
                 selector2=etree.HTML(html2)
                 info=selector2.xpath("//div[@class='c']")
-                is_empty=info[0].xpath("//span[@class='ctt']")
-                if is_empty:
-                    for i in range(2,len(info)-2):
+                n = 0
+                for i in range(0,len(info)):
+                    is_empty = info[i].xpath("div/span[@class='ctt']")
+                    if is_empty:
+                        print("===============================================================")
+                        n=n+1
+                        print("第"+str(page)+"页第"+str(n)+"条微博")
                         self.get_username(info[i])
-                        print(i-1)
-                else:
-                    print("0")
+                        self.get_content(info[i])
+                        print("===============================================================")
+                        print("")
         except Exception as e:
             print("Error:",e)
             traceback.print_exc()
