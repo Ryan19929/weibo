@@ -27,6 +27,7 @@ class weibo:
                 str_name=info.xpath("div/a[@class='nk']/text()")[0]
                 self.username=str_name
                 print("ID:"+str_name)
+                return str_name
         except Exception as e:
             print("Error:",e)
             traceback.print_exc()
@@ -38,44 +39,50 @@ class weibo:
                 weibo_content=str_c[0].xpath("string(.)").replace(u"\u200b","").encode(sys.stdout.encoding,"ignore").decode(sys.stdout.encoding)
                 self.weibo_content.append(weibo_content)
                 print("内容："+weibo_content)
+                return weibo_content
         except Exception as e:
             print("Error",e)
             traceback.print_exc()
 
     def get_weibo_info(self):
         try:
-            url="https://weibo.cn/search/mblog?hideSearchFrame=&keyword="+self.content+"&starttime="+self.start_time+"&"+self.end_time+"&sort=time&smblog=搜索"
-            html=requests.get(url,cookies=self.cookie).content
-            selector=etree.HTML(html)
-            if selector.xpath("//input[@name='mp']")==[]:
-                page_num=1
-            else:
-                page_num=int(selector.xpath("//input[@name='mp']")[0].attrib["value"])
-            for page in range(1,page_num+1):
-                url2=url+"&page="+str(page)
-                print(url2)
-                html2=requests.get(url2,cookies=self.cookie).content
-                selector2=etree.HTML(html2)
-                info=selector2.xpath("//div[@class='c']")
-                n = 0
-                for i in range(0,len(info)):
-                    is_empty = info[i].xpath("div/span[@class='ctt']")
-                    if is_empty:
-                        print("===============================================================")
-                        n=n+1
-                        print("第"+str(page)+"页第"+str(n)+"条微博")
-                        self.get_username(info[i])
-                        self.get_content(info[i])
-                        print("===============================================================")
-                        print("")
+            with open("../result.txt", 'w', encoding="UTF-8") as fp:
+                url="https://weibo.cn/search/mblog?hideSearchFrame=&keyword="+self.content+"&starttime="+self.start_time+"&"+self.end_time+"&sort=time&smblog=搜索"
+                html=requests.get(url,cookies=self.cookie).content
+                selector=etree.HTML(html)
+                if selector.xpath("//input[@name='mp']")==[]:
+                    page_num=1
+                else:
+                    page_num=int(selector.xpath("//input[@name='mp']")[0].attrib["value"])
+                for page in range(1,page_num+1):
+                    url2=url+"&page="+str(page)
+                    print(url2)
+                    html2=requests.get(url2,cookies=self.cookie).content
+                    selector2=etree.HTML(html2)
+                    info=selector2.xpath("//div[@class='c']")
+                    n = 0
+
+                    for i in range(0,len(info)):
+                        is_empty = info[i].xpath("div/span[@class='ctt']")
+                        if is_empty:
+                            print("===============================================================")
+                            n=n+1
+                            print("第"+str(page)+"页第"+str(n)+"条微博")
+                            fp.write("用户id:"+self.get_username(info[i]))
+                            fp.write("\n")
+                            fp.write("微博内容:"+self.get_content(info[i]))
+                            fp.write("\n")
+                            fp.write("\n")
+                            print("===============================================================")
+                            print("")
         except Exception as e:
             print("Error:",e)
             traceback.print_exc()
 def main():
     try:
-        content="杭州电子科技大学"
+        content="麦子俊i"
         start_time="20190301"
-        end_time="20190320"
+        end_time="20190414"
         wb=weibo(content,start_time,end_time)
         abname=wb.get_weibo_info()
         print(abname)
